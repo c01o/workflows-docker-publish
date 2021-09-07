@@ -13,8 +13,20 @@ runs:
       run: echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV
       shell: bash
 
-    - name: Checkout
+    # Explicitly specify `ref` on `pull_request_target` driven run.
+    # Currently only supports dependabot, since that trigger can be danger
+    - name: Checkout for non-dependabot
       uses: actions/checkout@v2
+      if: (github.event_name != 'pull_request_target')
+      with:
+        fetch-depth: 0
+    - name: Checkout for dependabot
+      uses: actions/checkout@v2
+      if: (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]')
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: 0
+
 
     - name: Cache Docker layers
       uses: actions/cache@v2
